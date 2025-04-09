@@ -4,8 +4,8 @@ import datetime
 import os
 from config import REPORT_TIME
 from .start import get_chat_ids
-from service.api import fetch_report_data
-from service.test import generate_pdf
+from services.api import fetch_report_data
+from services.generate_pdf import generate_pdf
 
 # Asenkron hisobot yuborish funksiyasi
 async def send_report(bot):
