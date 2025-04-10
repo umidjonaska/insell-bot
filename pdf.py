@@ -4,8 +4,12 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from datetime import date
 
+from services.request import fetch_report_data
+
+data = fetch_report_data()
+
 def generate_pdf(logo_path=None):
-    doc = SimpleDocTemplate("hisobot.pdf", pagesize=A4)
+    doc = SimpleDocTemplate(f"hisobot{date.today()}.pdf", pagesize=A4)
     elements = []
     styles = getSampleStyleSheet()
 
