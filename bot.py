@@ -4,7 +4,7 @@ import sys
 from aiogram import Bot, Dispatcher
 from config import BOT_TOKEN
 from handlers.handlers import register_handlers
-from handlers.schedule import start_scheduler  # start_scheduler import qilinadi
+from handlers.schedule import start_scheduler  # start_scheduler import qilinadiz
 
 # Initialize bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
