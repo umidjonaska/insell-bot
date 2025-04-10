@@ -1,5 +1,5 @@
 import requests
-#from config import BASE_URL
+from config import BASE_URL
 
 def fetch_report_data():
     try:
