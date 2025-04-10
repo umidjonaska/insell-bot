@@ -15,8 +15,8 @@ register_handlers(dp)
 
 # Start the bot
 async def main():
-    await dp.start_polling(bot)  # pollingni boshlash
-    await start_scheduler(bot)  # schedule ni boshlash (asenkron)
+    await dp.start_polling(bot)
+    await start_scheduler(bot)
     print(start_scheduler(bot))
 
 if __name__ == '__main__':

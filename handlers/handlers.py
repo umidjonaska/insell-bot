@@ -1,7 +1,7 @@
 from aiogram import Dispatcher
 from .start import router as start_router
-from .schedule import start_scheduler  # start_scheduler ni alohida import qilamiz
+from .report import router as report_router
 
 def register_handlers(dp: Dispatcher):
-    dp.include_router(start_router)  # start_router routerini qo‘shish
-    # start_scheduler ni register qilishning hojati yo‘q, uni alohida ishga tushirish kerak
+    dp.include_router(start_router)
+    dp.include_router(report_router)
