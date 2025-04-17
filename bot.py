@@ -5,29 +5,38 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram import Bot, Dispatcher
 from config import BOT_TOKEN
 from handlers.handlers import register_handlers
-from handlers.report import send_daily_reports
+from handlers.mahsulot import send_mahsulot_silent
+from handlers.kassa import send_kassa_silent
+from handlers.nasiya import send_nasiya_silent
+from handlers.umumiy import send_umumiy_silent
 
-# Initialize bot and dispatcher
+# Bot va Dispatcher obyektlarini yaratamiz
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 scheduler = AsyncIOScheduler()
 
-# Register handlers
+# Handlalarni ro'yxatdan o'tkazamiz
 register_handlers(dp)
 
+# Hisobot yuboruvchi asosiy funksiya
 async def send_report():
-    await send_daily_reports(bot)
+    await send_mahsulot_silent(bot)
+    await send_kassa_silent(bot)
+    await send_nasiya_silent(bot)
+    await send_umumiy_silent(bot)
 
-# Start the bot
+# Botni ishga tushirish funksiyasi
 async def main():
-    scheduler.add_job(send_report, trigger='cron', hour=15, minute=38)
+    # Har kuni belgilangan vaqtda hisobotlarni yuborish uchun cron job qo'shamiz
+    scheduler.add_job(send_report, trigger='cron', hour=17, minute=52)  # O'zingga kerakli vaqtni qo'y
     scheduler.start()
 
     await dp.start_polling(bot)
 
+# Kirish nuqtasi
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     try:
-        asyncio.run(main())  # Asenkron ishga tushirish
+        asyncio.run(main())
     except KeyboardInterrupt:
         print('Exit')
