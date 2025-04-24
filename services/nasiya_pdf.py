@@ -8,15 +8,15 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 
 
-def get_nasiya():
-    url = f"https://demo.api-insell.uz/get_statistics_for_bot/nasiya/1111/?from_time={date.today()}&to_time={date.today()}"
-    r = requests.get(url)
+def get_nasiya(telegram_id):
+    url = f"https://demo.api-insell.uz/get_statistics_for_bot/nasiya/{telegram_id}/?from_time={date.today()}&to_time={date.today()}"
+    r = requests.get(url, timeout=10)
     res = r.json()
     return res['data'][0]
 
 
-def generate_pdf(logo_path=None):
-    data = get_nasiya()
+def nasiya_pdf(telegram_id, logo_path=None):
+    data = get_nasiya(telegram_id)
 
     filename = f"hisobot_nasiya_{date.today()}.pdf"
     doc = SimpleDocTemplate(filename, pagesize=A4)
@@ -109,9 +109,3 @@ def generate_pdf(logo_path=None):
     # PDF ni build qilish
     doc.build(elements)
     return filename
-
-
-# Test
-if __name__ == "__main__":
-    path = generate_pdf("insell.png")
-    print(f"PDF fayl yaratildi: {path}" if path else "PDF yaratib bo‘lmadi.")

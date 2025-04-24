@@ -1,6 +1,8 @@
+"""Mahsulot hisoboti dinamic"""
+
 import requests
 from datetime import date
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -8,85 +10,102 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-# Unicode shriftni ulash uchun
-pdfmetrics.registerFont(TTFont('DejaVu', 'fonts/DejaVuSans.ttf'))  # Shrift faylini shu joyga qo'ying
+# Unicode shriftni ulash
+pdfmetrics.registerFont(TTFont('DejaVu', 'fonts/DejaVuSans.ttf'))  # Shrift fayli mavjud bo'lishi kerak
+
 styles = getSampleStyleSheet()
 styles.add(ParagraphStyle(name='Unicode', fontName='DejaVu', fontSize=10))
-styles.add(ParagraphStyle(name='WrapLeft', fontName='DejaVu', fontSize=8, alignment=0))
+styles.add(ParagraphStyle(name='WrapLeft', fontName='DejaVu', fontSize=8, alignment=0))  # TA_LEFT = 0
 
-def get_category():
-    url = "https://demo.api-insell.uz/get_categories_for_bot/1111/"
-    res = requests.get(url).json()
-    # Har bir kategoriya: (id, name) ko‘rinishida
-    return [(item['category_id'], item['category_name']) for item in res['data']]
+def get_category(telegram_id):
+    # 1. telegram_id f-string bilan qo'shildi
+    url = f"https://demo.api-insell.uz/get_categories_for_bot/{telegram_id}/"
+    print(f"Requesting URL (categories): {url}")
 
-def get_mahsulot():
-    url = "https://demo.api-insell.uz/get_statistics_for_bot/mahsulot_hisoboti/1111/"
+    try:
+        res = requests.get(url, timeout=10)
+        res.raise_for_status()  # HTTP xatolikni istisno qilish uchun
+        data = res.json().get('data', [])
+
+        categories = []
+        for branch_data in data:
+            items = branch_data.get('items')
+            if items:
+                # Agar 'items' mavjud bo'lsa, ularning ichidan kategoriya id/nomini olish
+                for item in items:
+                    categories.append((item['category_id'], item['category_name']))
+            else:
+                # Aks holda, branch_data o'zi kategoriya obyekti deb qaraymiz
+                # (Agar API shunga mos tuzilgan bo'lsa)
+                cat_id = branch_data.get('category_id')
+                cat_name = branch_data.get('category_name')
+                if cat_id and cat_name:
+                    categories.append((cat_id, cat_name))
+
+        return categories
+    except Exception as e:
+        print(f"Kategoriya olishda nomaʼlum xatolik: {e}")
+
+def get_mahsulot(telegram_id):
+    base_url = f"https://demo.api-insell.uz/get_statistics_for_bot/mahsulot_hisoboti/{telegram_id}/"
     category_data = {}
-    branch = None  # Branchni tashqarida e'lon qilamiz
+    branch = None
 
-    for cat_id, cat_name in get_category():
+    for cat_id, cat_name in get_category(telegram_id):
         params = {
-            "from_time": str(date.today()),
-            "to_time": str(date.today()),
+            "from_time": date.today(),
+            "to_time": date.today(),
             "category_id": cat_id
         }
+        # Quriladigan so‘rov to‘liq URL’sini olish uchun:
+        full_url = requests.Request('GET', base_url, params=params).prepare().url
+        #print(f"Requesting URL (statistics) for '{cat_name}': {full_url}")
+
         try:
-            res = requests.get(url, params=params).json()
-            if res['data']:
+            res = requests.get(base_url, params=params, timeout=10).json()
+            if res.get('data'):
                 data_block = res['data'][0]
                 if not branch:
                     branch = data_block.get('branch')
                 items = data_block.get('items', [])
                 if items:
                     category_data[cat_name] = items
-        except requests.exceptions.RequestException as e:
-            print(f"Xatolik: {e}")
+        except Exception as e:
+            print(f"{cat_name} uchun ma'lumotda xatolik: {e}")
 
     return {
-        "branch": branch,
+        "branch": branch or "Filial nomi aniqlanmadi",
         "categories": category_data
     }
 
-
-def generate_pdf(logo_path=None):
-    mahsulotlar = get_mahsulot()
+def mahsulot_pdf(telegram_id, logo_path=None):
+    mahsulotlar = get_mahsulot(telegram_id)
     doc_path = f"mahsulot_hisobot_{date.today()}.pdf"
     doc = SimpleDocTemplate(doc_path, pagesize=A4)
     elements = []
 
-    # Custom style for branch name
-    heading = ParagraphStyle(
-        name="Heading",
-        fontSize=10,
-        leading=24,
-        alignment=TA_CENTER
-    )
+    heading = ParagraphStyle(name="Heading", fontName='DejaVu', fontSize=10, leading=24, alignment=TA_CENTER)
 
-    # Branch name
     elements.append(Spacer(1, -60))
     branch_name = Paragraph(f"<b>{mahsulotlar['branch']}</b>", heading)
     elements.append(branch_name)
     elements.append(Spacer(1, 4))
 
-    # Logotip – yuqoriroq joylashtirish
     if logo_path:
-        elements.append(Spacer(1, -20))  # manfiy spacer – logoni yuqoriroq suradi
+        elements.append(Spacer(1, -20))
         logo = Image(logo_path, width=60, height=25)
         logo.hAlign = 'RIGHT'
         elements.append(logo)
-        elements.append(Spacer(1, 4))  # logodan keyin kichik masofa
+        elements.append(Spacer(1, 4))
 
-    # Sana
     elements.append(Paragraph(f"Sana: {date.today()}", styles['Unicode']))
     elements.append(Spacer(1, 12))
 
-    # Umumiy summa
     umumiy_summa = 0
     for items in mahsulotlar['categories'].values():
         for item in items:
             try:
-                umumiy_summa += int(item.get('summa', 0))
+                umumiy_summa += int(float(item.get('summa', 0)))
             except:
                 pass
 
@@ -96,9 +115,8 @@ def generate_pdf(logo_path=None):
     ))
     elements.append(Spacer(1, 10))
 
-    # Har bir kategoriya uchun jadval
     for category_name, items in mahsulotlar["categories"].items():
-        kategoriya_summa = sum([int(i.get("summa", 0)) for i in items])
+        kategoriya_summa = sum([int(float(i.get("summa", 0))) for i in items])
         kategoriya_soni = len(items)
 
         kategoriya_sarlavha = f"{category_name} : {kategoriya_summa:,} so’m, {kategoriya_soni} xil"
@@ -106,7 +124,6 @@ def generate_pdf(logo_path=None):
         elements.append(Paragraph(f"<font color='black'><b>{kategoriya_sarlavha}</b></font>", styles['Unicode']))
         elements.append(Spacer(1, 4))
 
-        # Jadval sarlavhasi
         table_data = [[
             "T/R", "Mahsulot", "Kun boshi", "Keldi", "Sotildi",
             "Qoldiq", "Narx", "Summa"
@@ -114,7 +131,6 @@ def generate_pdf(logo_path=None):
 
         for idx, item in enumerate(items, start=1):
             mahsulot_nomi = Paragraph(item.get('nomi', ''), styles['WrapLeft'])
-
             table_data.append([
                 idx,
                 mahsulot_nomi,
@@ -140,7 +156,6 @@ def generate_pdf(logo_path=None):
         elements.append(table)
         elements.append(Spacer(1, 10))
 
-    # Pastki eslatma
     elements.append(Paragraph(
         "<font size=8>Ma'lumotlar insell savdo dasturi yordamida tayyorlandi. "
         "Murojaat uchun: insell.uz +998 33 569 0901</font>", styles['Unicode']
@@ -148,7 +163,3 @@ def generate_pdf(logo_path=None):
 
     doc.build(elements)
     return doc_path
-
-# PDF faylni yaratish
-pdf = generate_pdf("insell.png")
-print(f"PDF tayyor: {pdf}")

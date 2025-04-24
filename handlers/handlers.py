@@ -1,4 +1,5 @@
 from aiogram import Dispatcher
+
 from .start import router as start_router
 from .mahsulot import router as mahsulot_router
 from .kassa import router as kassa_router
@@ -7,8 +8,7 @@ from .umumiy import router as umumiy_router
 
 def register_handlers(dp: Dispatcher):
     dp.include_router(mahsulot_router)
-
-    # dp.include_router(start_router)
-    # dp.include_router(kassa_router)
-    # dp.include_router(nasiya_router)
-    # dp.include_router(umumiy_router)
+    dp.include_router(start_router)
+    dp.include_router(kassa_router)
+    dp.include_router(nasiya_router)
+    dp.include_router(umumiy_router)
