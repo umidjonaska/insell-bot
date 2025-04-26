@@ -11,6 +11,7 @@ from reportlab.pdfgen import canvas
 
 def get_umumiy(telegram_id):
     url = f"https://demo.api-insell.uz/get_statistics_for_bot/umumiy_hisobot/{telegram_id}/?from_time={date.today()}&to_time={date.today()}"
+    print(f"Yuborilgan url: {url}")
     try:
         r = requests.get(url, timeout=10)
         r.raise_for_status()  # HTTP status xatoliklarini aniqlash

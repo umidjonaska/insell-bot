@@ -43,7 +43,7 @@ def kassa_pdf(telegram_id, category_id=0, logo_path=None):
     try:
         li = get_kassa(telegram_id)
     except Exception as e:
-        print(f"❌ API dan ma’lumot olishda xato: {e}")
+        print(f"API dan ma’lumot olishda xato: {e}")
         return ""
 
     total_kirim = 0

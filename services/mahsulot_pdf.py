@@ -59,7 +59,7 @@ def get_mahsulot(telegram_id):
         }
         # Quriladigan so‘rov to‘liq URL’sini olish uchun:
         full_url = requests.Request('GET', base_url, params=params).prepare().url
-        #print(f"Requesting URL (statistics) for '{cat_name}': {full_url}")
+        print(f"Requesting URL (statistics) for '{cat_name}': {full_url}")
 
         try:
             res = requests.get(base_url, params=params, timeout=10).json()
