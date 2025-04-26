@@ -7,7 +7,7 @@ from services.mahsulot_pdf import mahsulot_pdf
 from services.nasiya_pdf import nasiya_pdf
 from services.umumiy_pdf import umumiy_pdf
 
-CHAT_ID_FILE = "chat_id.txt"
+CHAT_ID_FILE = "user_settings.txt"
 
 def get_users_from_file():
     users = []
@@ -27,10 +27,17 @@ async def send_reports_for_users(bot):
     try:
         users = get_users_from_file()
         now = datetime.now()
+
+        # Tekshiruvchi log
+        print(f"Joriy vaqt: {now.hour}:{now.minute}")
+
         for user in users:
+            # Soat va minutlarni tekshirish
             if user["hour"] == now.hour and user["minute"] == now.minute:
                 chat_id = user["telegram_id"]
                 print(f"Hisobot yuborilmoqda: {chat_id}")
+
+                # PDF yaratish va yuborish
                 pdf_generators = [
                     ("Umumiy PDF", umumiy_pdf),
                     ("Kassa PDF", kassa_pdf),

@@ -1,7 +1,7 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import CommandObject, Command
-from services.user_settings import set_user_report_hour
+from services.user_settings import set_user_report_time
 
 router = Router()
 
@@ -19,5 +19,5 @@ async def set_hour(message: Message, command: CommandObject):
         await message.answer("❌ Soat noto‘g‘ri. Iltimos 0-23 orasida kiriting.")
         return
 
-    set_user_report_hour(message.from_user.id, hour)
+    set_user_report_time(message.from_user.id, hour, 0)
     await message.answer(f"✅ Endi siz har kuni soat {hour}:00 da hisobot olasiz.")
